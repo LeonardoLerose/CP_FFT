@@ -17,10 +17,10 @@ FFT PARALLEL IMPLEMETATION
 	RUN: qsub mpiJobParallel
 */
 #include <stdio.h>
-#include <mpi.h> /*To use MPI
+#include <mpi.h> /*To use MPI */
 #include <complex.h> /* to use complex numbers*/
 #include <math.h>	/* for cos() and sin()*/
-#include "timer.h" /* to use timer*/
+#include "Timer.h" /* to use timer*/
 
 #define PI 3.14159265
 #define bigN 16384 /*Problem Size */
@@ -29,7 +29,7 @@ FFT PARALLEL IMPLEMETATION
 int main()
 {
 	int my_rank,comm_sz;
-	MPI_Init(NULL,NULL); /*//start MPI
+	MPI_Init(NULL,NULL); /* start MPI */
 	MPI_Comm_size(MPI_COMM_WORLD,&comm_sz); /* how many processes are we using? */
 	MPI_Comm_rank(MPI_COMM_WORLD,&my_rank); /* which process is this? */
 	double start,finish;
