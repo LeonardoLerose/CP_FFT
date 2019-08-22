@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#@ job_name = FFT_Parallel
+#@ initialdir = /home/gruppo6/fft/fft2/
+#@ input = /dev/null
+#@ output = $(job_name).out
+#@ error = $(job_name).err
+#@ class = short
+#@ job_type = parallel
+#@ blocking = unlimited
+#@ total_tasks = 4
+#@ queue
+
+./FFT_Parallel
