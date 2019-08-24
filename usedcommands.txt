@@ -8,15 +8,15 @@ llsubmit FFT_Parallel_New.job
 
 
 # COMPILE .c programm
-mpcc FFT_Parallel_New.c -lm -o FFT_Parallel_New
+mpcc FFT_Parallel.c -lm -o FFT_Parallel
 
 
 # PULL file FROM Power7 TO localhost
-scp -r gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/fft2/ .
+scp -r gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft .
 
 
 # PUSH file FROM localhost TO Power7
-scp -r * gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/fft2/
+scp -r * gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft
 
 
 # INFO
@@ -30,6 +30,6 @@ llstatus
 
 # PUSH, COMPILE, EXECUTE, PULL
   # on localhost
-  scp FFT_Parallel.c gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/fft2/ && sleep 10 && scp gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/fft2/ParallelVersionOutput.txt .
+  scp FFT_Parallel.c gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/ && sleep 10 && scp gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/ParallelVersionOutput.txt .
   # on server
   mpcc FFT_Parallel.c -lm -o FFT_Parallel && llsubmit FFT_Parallel.job
