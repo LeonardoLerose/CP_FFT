@@ -23,7 +23,7 @@ FFT PARALLEL IMPLEMETATION
 #include "Timer.h" /* to use timer*/
 
 #define PI 3.14159265
-#define bigN 16384 /*Problem Size */
+#define bigN 10 /* 16384 Problem Size */
 #define howmanytimesavg 3 /* How many times do I wanna run for the AVG?*/
 
 int main()
@@ -156,9 +156,9 @@ int main()
 					{
 						fprintf(outfile," \n\n TOTAL PROCESSED SAMPLES : %d\n",bigN);
 					}
-					fprintf(outfile,"================================\n");
-					fprintf(outfile,"XR[%d]: %.4f XI[%d]: %.4f \n",k,storeKsumreal[k],k,storeKsumimag[k]);
-					fprintf(outfile,"================================\n");
+					/* fprintf(outfile,"================================\n"); */
+					fprintf(outfile,"X[%d]: %.4f + %.4fi \n",k,storeKsumreal[k],storeKsumimag[k]);
+					/* fprintf(outfile,"================================\n"); */
 				}
 			}
 		}
@@ -173,7 +173,7 @@ int main()
 	if(my_rank == 0)
 	{
 		avgtime = avgtime / howmanytimesavg; /*get avg time */
-		fprintf(outfile,"\nAverage Time Elaspsed: %f Seconds", avgtime);
+		fprintf(outfile,"\nAverage Time Elaspsed: %f Seconds\n", avgtime);
 		fclose(outfile); /*CLOSE file ONLY proc 0 can. */
 	}
 	MPI_Barrier(MPI_COMM_WORLD); /*wait to all proccesses to catch up before finalize */

@@ -1,0 +1,35 @@
+# Login to Power7
+ssh gruppo6@power7a.dei.unipd.it
+ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no gruppo6@power7a.dei.unipd.it
+
+
+# RUN a JOB on Power7:
+llsubmit FFT_Parallel_New.job
+
+
+# COMPILE .c programm
+mpcc FFT_Parallel_New.c -lm -o FFT_Parallel_New
+
+
+# PULL file FROM Power7 TO localhost
+scp -r gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/fft2/ .
+
+
+# PUSH file FROM localhost TO Power7
+scp -r * gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/fft2/
+
+
+# INFO
+cat /usr/spool/mail/gruppo6
+llstatus
+
+
+#~~~~~~~~~~~~~~~~~~~#
+# MULTIPLE COMMANDS #
+#~~~~~~~~~~~~~~~~~~~#
+
+# PUSH, COMPILE, EXECUTE, PULL
+  # on localhost
+  scp FFT_Parallel.c gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/fft2/ && sleep 10 && scp gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/fft2/ParallelVersionOutput.txt .
+  # on server
+  mpcc FFT_Parallel.c -lm -o FFT_Parallel && llsubmit FFT_Parallel.job
