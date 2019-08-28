@@ -57,7 +57,7 @@ int main()
 		while (fgets(row, ROW_LENGTH, inputfile) != NULL)
 		{
 			char *ptr = strtok(row, delim);
-			int index = atof(ptr);
+			double index = atof(ptr);
 			ptr = strtok(NULL, delim);
 			double realPart = atof(ptr);
 			ptr = strtok(NULL, delim);
@@ -65,8 +65,9 @@ int main()
 			table[i][0] = index;
 			table[i][1] = realPart;
 			table[i][2] = imagPart;
+			printf("%.4f %.4f %.4f\n", table[i][0], table[i][1], table[i][2]);
 			i++;
-			printf("%d %.4f %.4f\n", index, realPart, imagPart);  /* va in FFT_Parallel.out */
+			/*printf("%d %.4f %.4f\n", index, realPart, imagPart);  va in FFT_Parallel.out  */
 			
 		}
 		fclose(inputfile);
