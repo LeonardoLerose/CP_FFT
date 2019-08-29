@@ -1,19 +1,10 @@
 /*
-	This program computes the FFT in parallel using mpi
-	Runs the program 'NUM_OF_EXEC' amount of times and computes the time
-	for each iteration. Then calculate the average of the execution time
-	Each process get a part (subtable) of the input complex vector (table).
-	Then calculate even and odd for each subtable then P0 will gather these
-	values and print them to the output file
-	
-COMPILE: mpcc FFT_Parallel.c -lm -o FFT_Parallel
-RUN: llsubmit FFT_Parallel.job
-
 Lerose Leonardo, Moretto Alberto, Perali Luca 
-Universita degli studi di Padova
+Università degli studi di Padova
 Laboratorio di Calcolo Parallelo
 Implementazione in MPI della FFT
 */
+
 #include <stdio.h>
 #include <mpi.h>
 #include <complex.h>
@@ -23,72 +14,81 @@ Implementazione in MPI della FFT
 
 #define PI 3.14159265
 #define INPUT_SIZE 16 /* Size of the input vector to create (e.g. 16384) */
-#define ROW_LENGTH 50
+#define ROW_LENGTH 50 /* Used in parsing inputFile */
 
-int main()
-{
-	int my_rank, comm_sz;
-	MPI_Init(NULL, NULL);					 /* start MPI */
-	MPI_Comm_size(MPI_COMM_WORLD, &comm_sz); /* how many processes are we using? */
-	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank); /* which process is this? */
-	double start, finish;
-	double table[INPUT_SIZE][3];
-	char row[ROW_LENGTH];
-	char delim[] = " \n"; /*uso i delimitatori spazio e a capo per parsare il file di input*/
-	FILE *outfile = NULL;
-	FILE *inputfile = NULL;
-	int h;
-
-
-	if (my_rank == 0) /* if process 0, open outfile */
+int main(int argc, char* argv[])
+{		
+	if(argc != 3)
 	{
-		/*aggiunta creazione table da input
-		TODO: fopen() deve prendere un input da argument 
-		TODO: table non deve avere misura decisa a priori, va necessariamente creata dinamicamente*/
-		inputfile = fopen("test1.txt", "rw+");
+		printf(" ERROR, BAD ARGUMENTS");
+		return 1;
+	}
+
+	int my_rank, comm_sz; /* Rank of proc, Number of proc */
+	char row[ROW_LENGTH]; /* A single line of file */
+	char delim[] = " \n"; /* " " and "\n" used to parse the input */
+	
+	FILE *inputfile = NULL; /* File that contains the input vector, choosen with argv[2] */
+	FILE *outfile = NULL;	/* File that contains the FFT of input vector */ 
+
+
+	char* vectorSize = argv[1];		/* Size of the vector of which perform FFT */
+	char* inputFileName = argv[2];	/* Name of the file where is stored the input vector */
+	
+	int dimensions = atoi(vectorSize);
+	double table[dimensions][3];	/* Create a table with dimensions rows and 3 columns: column0: index, column1: Re, column2: Im */
+
+	MPI_Init(NULL, NULL);					 
+	MPI_Comm_size(MPI_COMM_WORLD, &comm_sz); 
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank); 
+
+	if (my_rank == 0) 
+	{
+		inputfile = fopen(inputFileName, "r");
 		if(inputfile == NULL)
 		{
-			printf("\n ERROR OPENING FILE, exit\n");
+			printf("ERROR, OPENING FILE");
 			return 1;
 		}
+
+		outfile = fopen("ParallelVersionOutput.txt", "w"); /* open from current directory */		/* DA RIMUOVERE, Usiamo outfile (usato per debug in questo momento) */
+
 		int i = 0;
-		outfile = fopen("ParallelVersionOutput.txt", "w"); /* open from current directory */
-		while (fgets(row, ROW_LENGTH, inputfile) != NULL)
+		while (fgets(row, ROW_LENGTH, inputfile) != NULL)	/* Parse inputfile one row at the time */
 		{
-			char *ptr = strtok(row, delim);
-			double index = atof(ptr);
-			ptr = strtok(NULL, delim);
-			double realPart = atof(ptr);
-			ptr = strtok(NULL, delim);
-			double imagPart = atof(ptr);
-			table[i][0] = index;
+			char *next = strtok(row, delim);
+			double index = atof(next);
+			next = strtok(NULL, delim);
+			double realPart = atof(next);
+			next = strtok(NULL, delim);
+			double imaginaryPart = atof(next);
+			table[i][0] = index;	/*populate the table */
 			table[i][1] = realPart;
-			table[i][2] = imagPart;
-			/*printf("%.4f %.4f %.4f\n", table[i][0], table[i][1], table[i][2]);*/
+			table[i][2] = imaginaryPart;
 			i++;
 					
 		}
 		fclose(inputfile);
 	}
 	
-	int i, k, n, j; /* Basic loop variables */
+	int i, k, n, j;		/* Vedere se metterli dentro al for */
 
-	double complex evenpart[(INPUT_SIZE / comm_sz / 2)];				 /*array to save the data for EVENHALF */
-	double complex oddpart[(INPUT_SIZE / comm_sz / 2)];					 /*array to save the data for ODDHALF */
-	double complex evenpartmaster[(INPUT_SIZE / comm_sz / 2) * comm_sz]; /* array to save the data for EVENHALF */
-	double complex oddpartmaster[(INPUT_SIZE / comm_sz / 2) * comm_sz];  /* array to save the data for ODDHALF */
-	double storeKsumreal[INPUT_SIZE];									 /* store the K real variable so we can abuse symmerty */
-	double storeKsumimag[INPUT_SIZE];									 /* store the K imaginary variable so we can abuse symmerty */
+	double complex evenpart[(dimensions / comm_sz / 2)];				 /* used to store the even part of data in the single proc */ 	/* nome = partE */
+	double complex oddpart[(dimensions / comm_sz / 2)];					 /* used to store the odd part of data in the single proc */	/* nome = partO */
+	double complex evenpartmaster[(dimensions / comm_sz / 2) * comm_sz]; /* used to store the even part of data in the master  */		/* nome = partEM */
+	double complex oddpartmaster[(dimensions / comm_sz / 2) * comm_sz];  /* used to store the odd part of data in the master */			/* nome = partOM */
+	double storeKsumreal[dimensions];									 /* Here will be saved the real values of the output FFT vector */ /* nome = sumKRe */
+	double storeKsumimag[dimensions];									 /* Here will be saved the imaginary of the output FFT vector */	/* nome = sumKIm */
+	double subtable[(dimensions / comm_sz)][3];							 /* Part of table owned by a single process  */
+	int subtable_size = (dimensions / comm_sz) * 3;						 /* How big each subtable */
+	
+	MPI_Scatter(table, subtable_size, MPI_DOUBLE, subtable, subtable_size, MPI_DOUBLE, 0, MPI_COMM_WORLD); /* Send data in table to subtables */
 
-	double subtable[(INPUT_SIZE / comm_sz)][3]; /* Each process owns a subtable from the table below  */
-
-	int subtable_size = (INPUT_SIZE / comm_sz) * 3;														   /* how much to send and recieve */
-	MPI_Scatter(table, subtable_size, MPI_DOUBLE, subtable, subtable_size, MPI_DOUBLE, 0, MPI_COMM_WORLD); /* scatter the table to subtables */
-	for (int i = 0; i<INPUT_SIZE / comm_sz; i++)
+	for (int i = 0; i<dimensions / comm_sz; i++)
 	{
 		printf("procID: %d , subtable: %f \n", my_rank, subtable[i][0]);
 	}
-	for (k = 0; k < INPUT_SIZE / 2; k++) /* K coeffiencet Loop */
+	for (k = 0; k < dimensions / 2; k++) /* K coeffiencet Loop */
 	{
 		/* Variables used for the computation */
 		double sumrealeven = 0.0; /* sum of real numbers for even */
@@ -96,7 +96,7 @@ int main()
 		double sumrealodd = 0.0;  /* sum of real numbers for odd */
 		double sumimagodd = 0.0;  /* sum of imaginary numbers for odd */
 
-		for (i = 0; i < (INPUT_SIZE / comm_sz) / 2; i++) /* Sigma loop EVEN and ODD */
+		for (i = 0; i < (dimensions / comm_sz) / 2; i++) /* Sigma loop EVEN and ODD */
 		{
 			double factoreven, factorodd = 0.0;
 			int shiftevenonnonzeroP = subtable[2 * i][0];	/* used to shift index numbers for correct results for EVEN. */
@@ -108,12 +108,12 @@ int main()
 			double complex componeeven = (realeven + imaginaryeven * I); /* Create the first component from table */
 			if (my_rank == 0)											 /* if proc 0, dont use shiftevenonnonzeroP */
 			{
-				factoreven = ((2 * PI) * ((2 * i) * k)) / INPUT_SIZE; /*Calculates the even factor for Cos() and Sin() */
+				factoreven = ((2 * PI) * ((2 * i) * k)) / dimensions; /*Calculates the even factor for Cos() and Sin() */
 																	  /*   *********Reduces computational time********* */
 			}
 			else /*use shiftevenonnonzeroP */
 			{
-				factoreven = ((2 * PI) * ((shiftevenonnonzeroP)*k)) / INPUT_SIZE; /*Calculates the even factor for Cos() and Sin() */
+				factoreven = ((2 * PI) * ((shiftevenonnonzeroP)*k)) / dimensions; /*Calculates the even factor for Cos() and Sin() */
 																				  /*   *********Reduces computational time********* */
 			}
 			double complex comptwoeven = (cos(factoreven) - (sin(factoreven) * I)); /*Create the second component */
@@ -126,12 +126,12 @@ int main()
 			double complex componeodd = (realodd + imaginaryodd * I); /*Create the first component from table */
 			if (my_rank == 0)										  /*if proc 0, dont use shiftoddonnonzeroP */
 			{
-				factorodd = ((2 * PI) * ((2 * i + 1) * k)) / INPUT_SIZE; /*Calculates the odd factor for Cos() and Sin()	*/
+				factorodd = ((2 * PI) * ((2 * i + 1) * k)) / dimensions; /*Calculates the odd factor for Cos() and Sin()	*/
 																		 /* *********Reduces computational time*********	 */
 			}
 			else /*use shiftoddonnonzeroP */
 			{
-				factorodd = ((2 * PI) * ((shiftoddonnonzeroP)*k)) / INPUT_SIZE; /*  Calculates the odd factor for Cos() and Sin() */
+				factorodd = ((2 * PI) * ((shiftoddonnonzeroP)*k)) / dimensions; /*  Calculates the odd factor for Cos() and Sin() */
 																				/* *********Reduces computational time********* */
 			}
 
@@ -141,12 +141,12 @@ int main()
 		}
 
 		/*Process ZERO gathers the even and odd part arrays and creates a evenpartmaster and oddpartmaster array*/
-		MPI_Gather(evenpart, (INPUT_SIZE / comm_sz / 2), MPI_DOUBLE_COMPLEX, evenpartmaster, (INPUT_SIZE / comm_sz / 2), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
-		MPI_Gather(oddpart, (INPUT_SIZE / comm_sz / 2), MPI_DOUBLE_COMPLEX, oddpartmaster, (INPUT_SIZE / comm_sz / 2), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
+		MPI_Gather(evenpart, (dimensions / comm_sz / 2), MPI_DOUBLE_COMPLEX, evenpartmaster, (dimensions / comm_sz / 2), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
+		MPI_Gather(oddpart, (dimensions / comm_sz / 2), MPI_DOUBLE_COMPLEX, oddpartmaster, (dimensions / comm_sz / 2), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
 
 		if (my_rank == 0)
 		{
-			for (i = 0; i < (INPUT_SIZE / comm_sz / 2) * comm_sz; i++) /*loop to sum the EVEN and ODD parts */
+			for (i = 0; i < (dimensions / comm_sz / 2) * comm_sz; i++) /*loop to sum the EVEN and ODD parts */
 			{
 				sumrealeven += creal(evenpartmaster[i]); /*sums the realpart of the even half */
 				sumimageven += cimag(evenpartmaster[i]); /*sums the imaginarypart of the even half */
@@ -155,23 +155,23 @@ int main()
 			}
 			storeKsumreal[k] = sumrealeven + sumrealodd;				  /*add the calculated reals from even and odd */
 			storeKsumimag[k] = sumimageven + sumimagodd;				  /*add the calculated imaginary from even and odd */
-			storeKsumreal[k + INPUT_SIZE / 2] = sumrealeven - sumrealodd; /*ABUSE symmetry Xkreal + N/2 = Evenk - OddK */
-			storeKsumimag[k + INPUT_SIZE / 2] = sumimageven - sumimagodd; /*ABUSE symmetry Xkimag + N/2 = Evenk - OddK */
+			storeKsumreal[k + dimensions / 2] = sumrealeven - sumrealodd; /*ABUSE symmetry Xkreal + N/2 = Evenk - OddK */
+			storeKsumimag[k + dimensions / 2] = sumimageven - sumimagodd; /*ABUSE symmetry Xkimag + N/2 = Evenk - OddK */
 			printf("%f \n", storeKsumreal[k]);
 			if (k == 0)
 			{
-				fprintf(outfile, "\nTOTAL PROCESSED SAMPLES : %d\n", INPUT_SIZE);
+				fprintf(outfile, "\nTOTAL PROCESSED SAMPLES : %d\n", dimensions);
 			}
-			fprintf(outfile, "FFT[%d]: %.4f + %.4fi \n", k, storeKsumreal[k], storeKsumimag[k]);
+			fprintf(outfile, "FFT[%d]: %.2f + %.2fi \n", k, storeKsumreal[k], storeKsumimag[k]);
 
 		}
 	}
 
 	if (my_rank == 0)
 	{
-		for(int k = INPUT_SIZE/2; k < INPUT_SIZE; k++)
+		for(int k = dimensions/2; k < dimensions; k++)
 		{
-			fprintf(outfile, "FFT[%d]: %.4f + %.4f \n", k, storeKsumreal[k], storeKsumimag[k]);
+			fprintf(outfile, "FFT[%d]: %.2f + %.2fi \n", k, storeKsumreal[k], storeKsumimag[k]);
 		}
 		fclose(outfile); /*CLOSE file ONLY proc 0 can. */
 	}
