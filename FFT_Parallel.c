@@ -45,7 +45,7 @@ int main()
 		/*aggiunta creazione table da input
 		TODO: fopen() deve prendere un input da argument 
 		TODO: table non deve avere misura decisa a priori, va necessariamente creata dinamicamente*/
-		inputfile = fopen("test.txt", "rw+");
+		inputfile = fopen("test1.txt", "rw+");
 		if(inputfile == NULL)
 		{
 			printf("\n ERROR OPENING FILE, exit\n");
@@ -99,8 +99,8 @@ int main()
 		for (i = 0; i < (INPUT_SIZE / comm_sz) / 2; i++) /* Sigma loop EVEN and ODD */
 		{
 			double factoreven, factorodd = 0.0;
-			int shiftevenonnonzeroP = my_rank * subtable[2 * i][0];	/* used to shift index numbers for correct results for EVEN. */
-			int shiftoddonnonzeroP = my_rank * subtable[2 * i + 1][0]; /* used to shift index numbers for correct results for ODD. */
+			int shiftevenonnonzeroP = subtable[2 * i][0];	/* used to shift index numbers for correct results for EVEN. */
+			int shiftoddonnonzeroP =  subtable[2 * i + 1][0]; /* used to shift index numbers for correct results for ODD. */
 
 			/* -------- EVEN PART -------- */
 			double realeven = subtable[2 * i][1];						 /* Access table for real number at spot 2i */
@@ -169,6 +169,10 @@ int main()
 
 	if (my_rank == 0)
 	{
+		for(int k = INPUT_SIZE/2; k < INPUT_SIZE; k++)
+		{
+			fprintf(outfile, "FFT[%d]: %.4f + %.4f \n", k, storeKsumreal[k], storeKsumimag[k]);
+		}
 		fclose(outfile); /*CLOSE file ONLY proc 0 can. */
 	}
 
