@@ -32,11 +32,10 @@ int main()
 	MPI_Comm_size(MPI_COMM_WORLD, &comm_sz); /* how many processes are we using? */
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank); /* which process is this? */
 	double start, finish;
-	double avgtime = 0;
 	double table[INPUT_SIZE][3];
 	char row[ROW_LENGTH];
 	char delim[] = " \n"; /*uso i delimitatori spazio e a capo per parsare il file di input*/
-	FILE *outfile;
+	FILE *outfile = NULL;
 	FILE *inputfile = NULL;
 	int h;
 
@@ -65,10 +64,9 @@ int main()
 			table[i][0] = index;
 			table[i][1] = realPart;
 			table[i][2] = imagPart;
-			printf("%.4f %.4f %.4f\n", table[i][0], table[i][1], table[i][2]);
+			/*printf("%.4f %.4f %.4f\n", table[i][0], table[i][1], table[i][2]);*/
 			i++;
-			/*printf("%d %.4f %.4f\n", index, realPart, imagPart);  va in FFT_Parallel.out  */
-			
+					
 		}
 		fclose(inputfile);
 	}
@@ -86,7 +84,10 @@ int main()
 
 	int subtable_size = (INPUT_SIZE / comm_sz) * 3;														   /* how much to send and recieve */
 	MPI_Scatter(table, subtable_size, MPI_DOUBLE, subtable, subtable_size, MPI_DOUBLE, 0, MPI_COMM_WORLD); /* scatter the table to subtables */
-
+	for (int i = 0; i<INPUT_SIZE / comm_sz; i++)
+	{
+		printf("procID: %d , subtable: %f \n", my_rank, subtable[i][0]);
+	}
 	for (k = 0; k < INPUT_SIZE / 2; k++) /* K coeffiencet Loop */
 	{
 		/* Variables used for the computation */
@@ -156,7 +157,7 @@ int main()
 			storeKsumimag[k] = sumimageven + sumimagodd;				  /*add the calculated imaginary from even and odd */
 			storeKsumreal[k + INPUT_SIZE / 2] = sumrealeven - sumrealodd; /*ABUSE symmetry Xkreal + N/2 = Evenk - OddK */
 			storeKsumimag[k + INPUT_SIZE / 2] = sumimageven - sumimagodd; /*ABUSE symmetry Xkimag + N/2 = Evenk - OddK */
-
+			printf("%f \n", storeKsumreal[k]);
 			if (k == 0)
 			{
 				fprintf(outfile, "\nTOTAL PROCESSED SAMPLES : %d\n", INPUT_SIZE);
@@ -168,11 +169,6 @@ int main()
 
 	if (my_rank == 0)
 	{
-	/*	for (j = INPUT_SIZE/2; i < INPUT_SIZE; i++)
-			{
-				fprintf(outfile, "FFT[%d]: %.4f + %.4fi \n", j, storeKsumreal[j], storeKsumimag[j]);
-			}
-			*/
 		fclose(outfile); /*CLOSE file ONLY proc 0 can. */
 	}
 
