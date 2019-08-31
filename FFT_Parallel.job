@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #@ job_name = FFT_Parallel
-#@ initialdir = /home/gruppo6/fft/
+#@ initialdir = /home/gruppo6/leonardo/CP_FFT/
 #@ input = /dev/null
 #@ output = $(job_name).out
 #@ error = $(job_name).err
@@ -11,4 +11,4 @@
 #@ total_tasks = 4
 #@ queue
 
-./FFT_Parallel
+./FFT_Parallel 16 test1.txt
