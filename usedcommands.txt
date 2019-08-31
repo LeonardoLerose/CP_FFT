@@ -30,6 +30,6 @@ llstatus
 
 # PUSH, COMPILE, EXECUTE, PULL
   # on localhost
-  scp FFT_Parallel.c gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/ && sleep 10 && scp gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft/ParallelVersionOutput.txt .
+  scp FFT_Parallel.c gruppo6@power7a.dei.unipd.it:/home/gruppo6/luca/ && sleep 10 && scp gruppo6@power7a.dei.unipd.it:/home/gruppo6/luca/ParallelVersionOutput.txt .
   # on server
   mpcc FFT_Parallel.c -lm -o FFT_Parallel && llsubmit FFT_Parallel.job
