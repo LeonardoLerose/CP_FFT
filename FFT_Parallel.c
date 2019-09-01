@@ -17,10 +17,10 @@ Implementazione in MPI della FFT
 #define ROW_LENGTH 50 /* Used in parsing inputFile */
 
 int main(int argc, char* argv[])
-{		
+{
 	if(argc != 3)
 	{
-		printf(" ERROR, BAD ARGUMENTS");
+		perror(" ERROR, BAD ARGUMENTS");
 		return 1;
 	}
 
@@ -29,8 +29,7 @@ int main(int argc, char* argv[])
 	char delim[] = " \n"; /* " " and "\n" used to parse the input */
 	
 	FILE *inputfile = NULL; /* File that contains the input vector, choosen with argv[2] */
-	FILE *outfile = NULL;	/* File that contains the FFT of input vector */ 
-
+	FILE *outfile = NULL;	/* File that contains the FFT of input vector */
 
 	char* vectorSize = argv[1];		/* Size of the vector of which perform FFT */
 	char* inputFileName = argv[2];	/* Name of the file where is stored the input vector */
@@ -38,16 +37,23 @@ int main(int argc, char* argv[])
 	int dimensions = atoi(vectorSize);
 	double table[dimensions][3];	/* Create a table with dimensions rows and 3 columns: column0: index, column1: Re, column2: Im */
 
-	MPI_Init(NULL, NULL);					 
-	MPI_Comm_size(MPI_COMM_WORLD, &comm_sz); 
-	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank); 
+	MPI_Init(NULL, NULL);
+	MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+	double tot_time = -MPI_Wtime();
+	double loadinput_time;
+    double scatter_time;
+    double evenodd_time;
+    double gather_time;
 
 	if (my_rank == 0) 
 	{
+        loadinput_time -= MPI_Wtime();
 		inputfile = fopen(inputFileName, "r");
 		if(inputfile == NULL)
 		{
-			printf("ERROR, OPENING FILE");
+			perror("ERROR, OPENING FILE");
 			return 1;
 		}
 
@@ -69,6 +75,7 @@ int main(int argc, char* argv[])
 					
 		}
 		fclose(inputfile);
+        loadinput_time += MPI_Wtime();
 	}
 	
 	int i, k, n, j;		/* Vedere se metterli dentro al for */
@@ -81,14 +88,13 @@ int main(int argc, char* argv[])
 	double storeKsumimag[dimensions];									 /* Here will be saved the imaginary of the output FFT vector */	/* nome = sumKIm */
 	double subtable[(dimensions / comm_sz)][3];							 /* Part of table owned by a single process  */
 	int subtable_size = (dimensions / comm_sz) * 3;						 /* How big each subtable */
-	
-	MPI_Scatter(table, subtable_size, MPI_DOUBLE, subtable, subtable_size, MPI_DOUBLE, 0, MPI_COMM_WORLD); /* Send data in table to subtables */
 
-	for (int i = 0; i<dimensions / comm_sz; i++)
-	{
-		printf("procID: %d , subtable: %f \n", my_rank, subtable[i][0]);
-	}
-	for (k = 0; k < dimensions / 2; k++) /* K coeffiencet Loop */
+    scatter_time -= MPI_Wtime();
+	MPI_Scatter(table, subtable_size, MPI_DOUBLE, subtable, subtable_size, MPI_DOUBLE, 0, MPI_COMM_WORLD); /* Send data in table to subtables */
+    scatter_time += MPI_Wtime();
+
+    evenodd_time -= MPI_Wtime();
+	for (k = 0; k < dimensions / 2; k++) /* 0 to input.size/2 loop */
 	{
 		/* Variables used for the computation */
 		double sumrealeven = 0.0; /* sum of real numbers for even */
@@ -141,8 +147,10 @@ int main(int argc, char* argv[])
 		}
 
 		/*Process ZERO gathers the even and odd part arrays and creates a evenpartmaster and oddpartmaster array*/
+        gather_time -= MPI_Wtime();
 		MPI_Gather(evenpart, (dimensions / comm_sz / 2), MPI_DOUBLE_COMPLEX, evenpartmaster, (dimensions / comm_sz / 2), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
 		MPI_Gather(oddpart, (dimensions / comm_sz / 2), MPI_DOUBLE_COMPLEX, oddpartmaster, (dimensions / comm_sz / 2), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
+        gather_time += MPI_Wtime();
 
 		if (my_rank == 0)
 		{
@@ -157,15 +165,15 @@ int main(int argc, char* argv[])
 			storeKsumimag[k] = sumimageven + sumimagodd;				  /*add the calculated imaginary from even and odd */
 			storeKsumreal[k + dimensions / 2] = sumrealeven - sumrealodd; /*ABUSE symmetry Xkreal + N/2 = Evenk - OddK */
 			storeKsumimag[k + dimensions / 2] = sumimageven - sumimagodd; /*ABUSE symmetry Xkimag + N/2 = Evenk - OddK */
-			printf("%f \n", storeKsumreal[k]);
 			if (k == 0)
 			{
-				fprintf(outfile, "\nTOTAL PROCESSED SAMPLES : %d\n", dimensions);
+				fprintf(outfile, "TOTAL PROCESSED SAMPLES : %d\n", dimensions);
 			}
-			fprintf(outfile, "FFT[%d]: %.2f + %.2fi \n", k, storeKsumreal[k], storeKsumimag[k]);
+			fprintf(outfile, "FFT[%d]: %.2f + %.2fi ; \n", k, storeKsumreal[k], storeKsumimag[k]);
 
 		}
-	}
+	} /* 0 to input.size/2 loop */
+    evenodd_time += MPI_Wtime();
 
 	if (my_rank == 0)
 	{
@@ -176,6 +184,10 @@ int main(int argc, char* argv[])
 		fclose(outfile); /*CLOSE file ONLY proc 0 can. */
 	}
 
+
+    tot_time += MPI_Wtime();
+    printf("%d,%d,%f,%f,%f,%f\n", my_rank, comm_sz, tot_time, scatter_time, evenodd_time, gather_time);
+    fflush(stdout);
 	MPI_Barrier(MPI_COMM_WORLD); /*wait to all proccesses to catch up before finalize */
 	MPI_Finalize();				 /*End MPI */
 	return 0;
