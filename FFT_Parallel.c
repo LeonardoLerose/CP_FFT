@@ -13,7 +13,6 @@ Implementazione in MPI della FFT
 #include <string.h>
 
 #define PI 3.14159265
-#define INPUT_SIZE 16 /* Size of the input vector to create (e.g. 16384) */
 #define ROW_LENGTH 50 /* Used in parsing inputFile */
 
 int main(int argc, char* argv[])
@@ -36,7 +35,7 @@ int main(int argc, char* argv[])
 	char* inputFileName = argv[2];	/* Name of the file where is stored the input vector */
 	
 	int dimensions = atoi(vectorSize);
-	double table[dimensions][3];	/* Create a table with dimensions rows and 3 columns: column0: index, column1: Re, column2: Im */
+	double table[dimensions][3];	/* Create a table with <dimensions> rows and 3 columns: column0: index, column1: Re, column2: Im */
 
 	MPI_Init(NULL, NULL);					 
 	MPI_Comm_size(MPI_COMM_WORLD, &comm_sz); 
@@ -51,7 +50,7 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		outfile = fopen("ParallelVersionOutput.txt", "w"); /* open from current directory */		/* DA RIMUOVERE, Usiamo outfile (usato per debug in questo momento) */
+		outfile = fopen("ParallelVersionOutput.txt", "w"); 	/* DA RIMUOVERE, Usiamo outfile quello specificato nel file .job (usato per comodità in questo momento) */
 
 		int i = 0;
 		while (fgets(row, ROW_LENGTH, inputfile) != NULL)	/* Parse inputfile one row at the time */
@@ -146,7 +145,7 @@ int main(int argc, char* argv[])
 
 		if (my_rank == 0)
 		{
-			for (i = 0; i < (dimensions / comm_sz / 2) * comm_sz; i++) /*loop to sum the EVEN and ODD parts */
+			for (i = 0; i < dimensions / 2; i++) /*loop to sum the EVEN and ODD parts */
 			{
 				sumrealeven += creal(evenpartmaster[i]); /*sums the realpart of the even half */
 				sumimageven += cimag(evenpartmaster[i]); /*sums the imaginarypart of the even half */
@@ -166,17 +165,17 @@ int main(int argc, char* argv[])
 
 		}
 	}
-
+	
 	if (my_rank == 0)
 	{
 		for(int k = dimensions/2; k < dimensions; k++)
 		{
 			fprintf(outfile, "FFT[%d]: %.2f + %.2fi \n", k, storeKsumreal[k], storeKsumimag[k]);
 		}
-		fclose(outfile); /*CLOSE file ONLY proc 0 can. */
+		fclose(outfile); 
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD); /*wait to all proccesses to catch up before finalize */
-	MPI_Finalize();				 /*End MPI */
+	MPI_Barrier(MPI_COMM_WORLD); 
+	MPI_Finalize();				 
 	return 0;
 }
