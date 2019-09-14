@@ -11,4 +11,4 @@
 #@ total_tasks = 4
 #@ queue
 
-./FFT_Parallel 16 test1.txt
+./FFT_Parallel 32 32random
