@@ -1,26 +1,18 @@
 
-TOTAL PROCESSED SAMPLES : 10
-FFT[0]: 35.4000 + 33.9000i 
-FFT[1]: 33.8556 + 8.9356i 
-FFT[2]: 1.7262 + -4.8506i 
-FFT[3]: 3.8674 + 0.2719i 
-FFT[4]: 23.2702 + -7.4036i 
-Time Elaspsed on Iteration 1: 0.003737 Seconds
-
-TOTAL PROCESSED SAMPLES : 10
-FFT[0]: 35.4000 + 33.9000i 
-FFT[1]: 33.8556 + 8.9356i 
-FFT[2]: 1.7262 + -4.8506i 
-FFT[3]: 3.8674 + 0.2719i 
-FFT[4]: 23.2702 + -7.4036i 
-Time Elaspsed on Iteration 2: 0.005364 Seconds
-
-TOTAL PROCESSED SAMPLES : 10
-FFT[0]: 35.4000 + 33.9000i 
-FFT[1]: 33.8556 + 8.9356i 
-FFT[2]: 1.7262 + -4.8506i 
-FFT[3]: 3.8674 + 0.2719i 
-FFT[4]: 23.2702 + -7.4036i 
-Time Elaspsed on Iteration 3: 0.004612 Seconds
-
-Average Time Elaspsed: 0.004571 Seconds
+TOTAL PROCESSED SAMPLES : 16
+FFT[0]: 24.00 + 56.00i 
+FFT[1]: -0.00 + -0.00i 
+FFT[2]: -0.00 + -0.00i 
+FFT[3]: 0.00 + -0.00i 
+FFT[4]: 0.00 + -0.00i 
+FFT[5]: 0.00 + -0.00i 
+FFT[6]: 0.00 + -0.00i 
+FFT[7]: 0.00 + -0.00i 
+FFT[8]: -8.00 + -8.00i 
+FFT[9]: 0.00 + 0.00i 
+FFT[10]: 0.00 + 0.00i 
+FFT[11]: 0.00 + 0.00i 
+FFT[12]: 0.00 + 0.00i 
+FFT[13]: 0.00 + 0.00i 
+FFT[14]: 0.00 + 0.00i 
+FFT[15]: 0.00 + 0.00i 

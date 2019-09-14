@@ -9,3 +9,5 @@ C_TEST
 **.out
 jobs
 python
+*.txt
+

@@ -11,7 +11,7 @@ highRange = 0
 print("Arguments: " + str(sys.argv) + "\n")
 if (len(sys.argv) == 4):
     size = int(sys.argv[1])
-    filenameToCreate = "random" + str(size)
+    filenameToCreate = str(size) + "random"
     lowRange = int(sys.argv[2])
     highRange = int(sys.argv[3])
 else:
@@ -21,9 +21,9 @@ else:
 fileToCreate = open(filenameToCreate, "w+")
 for i in range(size):
     realInt = random.randint(lowRange, highRange)
-    realFloat = random.randint(0, 99)
+    realFloat = 0 #random.randint(0, 99)
     imgInt = random.randint(lowRange, highRange)
-    imgFloat = random.randint(0, 99)
+    imgFloat = 0 #random.randint(0, 99)
     real = str(realInt) + "." + str(realFloat)
     img = str(imgInt) + "." + str(imgFloat)
     strToWrite = str(i) + " " + real + " " + img + "\n"
