@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
         loadinput_time += MPI_Wtime();
 	}
 	
-	int i, k, n, j;		/* Vedere se metterli dentro al for */
+	int i, k, n, j;		/* VEDERE SE METTERLI DENTRO AL FOR */
 
 	double complex partEven[(dimensions / comm_sz / 2)];				 /* used to store the even part of data in the single proc */ 	 
 	double complex partOdd[(dimensions / comm_sz / 2)];					 /* used to store the odd part of data in the single proc */	
@@ -104,8 +104,8 @@ int main(int argc, char* argv[])
 		for (i = 0; i < (dimensions / comm_sz) / 2; i++) /* Sigma loop EVEN and ODD */
 		{
 			double factorEven, factorOdd = 0.0;
-			int shiftErankNonZero = subtable[2 * i][0];			/* shift the right amount proc that have rank !=0 , Even part */
-			int shiftOrankNonZero =  subtable[2 * i + 1][0]; 	/* shift the right amount proc that have rank !=0 , Odd part */
+			int shiftE = subtable[2 * i][0];			/* shift the right amount proc that have rank !=0 , Even part */
+			int shiftO =  subtable[2 * i + 1][0]; 	/* shift the right amount proc that have rank !=0 , Odd part */
 
 			double reE = subtable[2 * i][1];					/* real number at position 2i */
 			double complex imE = subtable[2 * i][2];			/* imaginary number at position 2i */
@@ -114,17 +114,9 @@ int main(int argc, char* argv[])
 			double reO = subtable[2 * i + 1][1];				/* real number at position 2i+1 */
 			double complex imO = subtable[2 * i + 1][2];	 	/* imaginary number at position 2i+1 */
 			double complex firstCompO = (reO + imO * I); 
-			
-			if (my_rank == 0)									/* Use the right shift value to compute the even and odd factor for sine and cosine */
-			{
-				factorEven = ((2 * PI) * ((2 * i) * k)) / dimensions; 		
-				factorOdd = ((2 * PI) * ((2 * i + 1) * k)) / dimensions; 				
-			}
-			else 
-			{
-				factorEven = ((2 * PI) * ((shiftErankNonZero)*k)) / dimensions; 
-				factorOdd = ((2 * PI) * ((shiftOrankNonZero)*k)) / dimensions; 	
-			}
+
+			factorEven = ((2 * PI) * ((shiftE)*k)) / dimensions; 
+			factorOdd = ((2 * PI) * ((shiftO)*k)) / dimensions; 	
 
 			double complex secondCompE = (cos(factorEven) - (sin(factorEven) * I)); /*Create the second component */
 			double complex secondCompO = (cos(factorOdd) - (sin(factorOdd) * I)); 	
@@ -160,7 +152,7 @@ int main(int argc, char* argv[])
 			{
 				fprintf(outfile, "TOTAL PROCESSED SAMPLES : %d\n", dimensions);
 			}
-			fprintf(outfile, "FFT[%d]: %.2f + %.2fi ; \n", k, sumKRe[k], sumKIm[k]);
+			fprintf(outfile, "FFT[%d]: %.2f + %.2fi \n", k, sumKRe[k], sumKIm[k]);
 
 		}
 	} /* 0 to input.size/2 loop */
