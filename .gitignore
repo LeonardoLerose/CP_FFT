@@ -1,2 +1,13 @@
 *.err
 *.out
+.idea
+.vscode
+FFT_Parallel.job
+C_TEST
+**.job
+**.err
+**.out
+jobs
+python
+*.txt
+
