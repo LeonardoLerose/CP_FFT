@@ -22,7 +22,7 @@ scp -r * gruppo6@power7a.dei.unipd.it:/home/gruppo6/fft
 # INFO
 cat /usr/spool/mail/gruppo6
 llstatus
-
+ps -A -o pid,user,state,time,command | grep gruppo | grep A
 
 #~~~~~~~~~~~~~~~~~~~#
 # MULTIPLE COMMANDS #
@@ -33,3 +33,6 @@ llstatus
   scp FFT_Parallel.c gruppo6@power7a.dei.unipd.it:/home/gruppo6/luca/ && sleep 10 && scp gruppo6@power7a.dei.unipd.it:/home/gruppo6/luca/ParallelVersionOutput.txt .
   # on server
   mpcc FFT_Parallel.c -lm -o FFT_Parallel && llsubmit FFT_Parallel.job
+
+# Multi test
+./mul_submit.sh && mv stat stat_sin_1 && ./mul_submit.sh && mv stat stat_sin_2 && ./mul_submit.sh && mv stat stat_sin_3
